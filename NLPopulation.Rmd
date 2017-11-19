@@ -1,0 +1,67 @@
+##Date Created
+
+```{r}
+Sys.Date()
+```
+
+##Data in
+The data is taken from:
+
+- city names - http://worldpopulationreview.com/countries/netherlands-population/cities/
+- coordinates  - source code in https://andybeger.com/2013/08/06/finding-coordinates-for-cities-etc-with-r/
+
+##Libraries
+```{r}
+suppressMessages( library(data.table))
+suppressMessages( library(dplyr))
+library(geonames)
+```
+
+##Reading in the names data
+```{r}
+population <- read.csv("data.csv", stringsAsFactors = FALSE)
+names(population)[2] <- "population"
+
+```
+
+##How to get the data for coordinates
+This is not evaluated because the call to the Geonames website requires a user name each time and I would rather not put that in the code.
+```{r, eval = FALSE}
+GNSearchNL <- function(x) {
+  res <- GNsearch(name = x, country = "NL")
+  return(res[1,])
+}
+
+GNresults <- sapply(unique(population$Name), GNSearchNL)
+GNresults2 <- unique(data.frame(t(data.frame(GNresults))))
+GNresults2 <- subset(GNresults2, select = c("name", "lng", "lat", "population", "fcodeName"))
+GNresults2$lat <- as.numeric(GNresults2$lat)
+GNresults2$lng <- as.numeric(GNresults2$lng)
+GNresults2$name <- as.character(GNresults2$name)
+GNresults2$population <- as.numeric(GNresults2$population)
+GNresults2$fcodeName <- as.character(GNresults2$fcodeName)
+GNresults2 <- data.table(GNresults2)
+GNresults2[,Color := "blue",][fcodeName == "populated place",Color := "black",]
+write.csv(GNresults2, "res.csv")
+```
+
+##Getting the written data
+```{r}
+GNresults2 <- read.csv("res.csv", stringsAsFactors = FALSE)
+
+```
+
+##Map
+
+```{r}
+library(leaflet)
+GNresults2 %>% 
+  leaflet() %>%
+  addTiles() %>%
+  addCircles(lng = GNresults2$lng, lat = GNresults2$lat, weight = 1, 
+             radius = sqrt(GNresults2$population) * 15,  label = GNresults2$fcodeName, 
+             color = GNresults2$Color) %>%
+  addLegend(labels = c("Administrative City", "Populated Place"), colors = c("blue", "black"))
+
+
+```
