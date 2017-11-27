@@ -1,0 +1,27 @@
+#Map
+
+##Today's Date
+```{r, echo = FALSE}
+Sys.Date()
+```
+
+
+##Map
+
+Libraries
+```{r}
+library(plotly)
+```
+Data
+```{r}
+#You can get the data from here:
+address <- "https://www.kaggle.com/zynicide/wine-reviews/downloads/wine-reviews.zip"
+data <- read.csv("winemag-data_first150k.csv")
+# I want to see the top 100 wines in the world
+data2 <- data[1:100,]
+```
+Map
+```{r}
+
+plot_ly(data = data2, x = data2$score, y = data2$price, color = data2$country)
+```
